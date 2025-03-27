@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Encryption & Decryption </title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            background: #f5f5dc; 
+            margin: 0;
+            padding: 20px;
+            color: #333; 
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50; 
+            font-size: 2.5em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff; 
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border: 2px solid #bdc3c7; 
+            display: flex;
+            flex-direction: row; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            gap: 20px; 
+            flex-wrap: nowrap; 
+        }
+
+        .column {
+            flex: 1; 
+            min-width: 400px; 
+            padding: 15px;
+            background: #f7f9fc; 
+            border-radius: 10px;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .column:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .section {
+            margin: 20px 0;
+        }
+
+        label {
+            font-weight: bold;
+            color: #2c3e50; 
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        input[type="text"], select {
+            padding: 10px;
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #bdc3c7; 
+            border-radius: 8px;
+            background: #fff;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: #3498db; 
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        .result {
+            background-color: #ecf0f1; 
+            border: 2px solid #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        button {
+            padding: 12px 25px;
+            margin: 8px 5px;
+            background: linear-gradient(to right, #3498db, #2980b9); 
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #2980b9, #3498db);
+            transform: scale(1.05);
+        }
+
+        button.red {
+            background: linear-gradient(to right, #e74c3c, #c0392b); 
+        }
+
+        button.red:hover {
+            background: linear-gradient(to right, #c0392b, #e74c3c);
+        }
+
+        .error {
+            color: #e74c3c; 
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: none;
+            font-style: italic;
+        }
+
+        #errorContainer {
+            width: 100%;
+            border: 2px solid #e74c3c;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9e1e1; 
+            border-radius: 8px;
+            display: none;
+        }
+
+        #errorMessage {
+            margin: 0;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column; 
+            }
+
+            .column {
+                min-width: 100%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Encryption & Decryption </h1>
+    <div class="container">
+        <div id="errorContainer">
+            <p id="errorMessage"></p>
+        </div>
+
+        <!-- Encryption Column -->
+        <div class="column">
+            <h2 style="color: #3498db; font-size: 1.5em; margin-bottom: 20px;">Encryption</h2>
+
+            <div class="section">
+                <label for="message">Message to Encrypt:</label>
+                <input type="text" id="message" name="message" value="Hello World">
+                <div id="messageError" class="error"></div>
+            </div>
+
+            <div class="section">
+                <label for="key">Encryption Key:</label>
+                <input type="text" id="key" name="key" value="Enter a key">
+                <div id="keyError" class="error"></div>
+            </div>
+
+            <div class="section">
+                <button name="encrypt" onclick="handleEncrypt()">Encrypt</button>
+                <button name="copy_encrypt" class="red" onclick="handleCopy('result_encrypt')">Copy Encryption</button>
+            </div>
+
+            <div class="section">
+                <label for="result_encrypt">Encrypted Result:</label>
+                <input type="text" id="result_encrypt" name="result_encrypt" value="{{ result_encrypt|default:'' }}" class="result" readonly>
+                <div id="encryptResultError" class="error"></div>
+            </div>
+        </div>
+
+        <!-- Decryption Column -->
+        <div class="column">
+            <h2 style="color: #3498db; font-size: 1.5em; margin-bottom: 20px;">Decryption</h2>
+
+            <div class="section">
+                <label for="decrypt_input">Message to Decrypt:</label>
+                <input type="text" id="decrypt_input" name="decrypt_input" value="{{ decrypt_input|default:'' }}">
+                <div id="decryptInputError" class="error"></div>
+            </div>
+
+            <div class="section">
+                <label for="decrypt_key">Decryption Key:</label>
+                <input type="text" id="decrypt_key" name="decrypt_key" value="Enter a key">
+                <div id="decryptKeyError" class="error"></div>
+            </div>
+
+            <div class="section">
+                <button name="decrypt" onclick="handleDecrypt()">Decrypt</button>
+                <button name="copy_decrypt" class="red" onclick="handleCopy('result_decrypt')">Copy Decryption</button>
+            </div>
+
+            <div class="section">
+                <label for="result_decrypt">Decrypted Result:</label>
+                <input type="text" id="result_decrypt" name="result_decrypt" value="{{ result_decrypt|default:'' }}" class="result" readonly>
+                <div id="decryptResultError" class="error"></div>
+            </div>
+        </div>
+
+        <!-- Algorithm Selection -->
+        <div class="section" style="width: 100%;">
+            <label for="algorithm">Choose Algorithm:</label>
+            <select id="algorithm" name="algorithm" onchange="updateAlgorithm()">
+                <option value="otp" {% if algorithm == 'otp' %}selected{% endif %}>One-Time Pad</option>
+                <option value="aes" {% if algorithm == 'aes' %}selected{% endif %}>AES</option>
+                <option value="3des" {% if algorithm == '3des' %}selected{% endif %}>3DES</option>
+            </select>
+            <div id="algorithmError" class="error"></div>
+        </div>
+    </div>
+
+    <form method="post" id="cryptoForm">
+        {% csrf_token %}
+        <input type="hidden" name="message" id="hidden_message">
+        <input type="hidden" name="decrypt_input" id="hidden_decrypt_input">
+        <input type="hidden" name="key" id="hidden_key">
+        <input type="hidden" name="algorithm" id="hidden_algorithm" value="{{ algorithm|default:'otp' }}">
+    </form>
+    <script>
+        // Function to display errors
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'Please fix the following errors:';
+        }
+
+        // Function to clear errors
+        function clearErrors() {
+            document.querySelectorAll('.error').forEach(error => {
+                error.style.display = 'none';
+                error.textContent = '';
+            });
+            document.getElementById('errorContainer').style.display = 'none';
+            document.getElementById('errorMessage').textContent = '';
+        }
+
+        // Validate form inputs
+        function validateForm(action) {
+            clearErrors();
+            let isValid = true;
+
+            const message = document.getElementById('message').value.trim();
+            const key = action === 'encrypt' ? document.getElementById('key').value.trim() : document.getElementById('decrypt_key').value.trim();
+            const decryptInput = document.getElementById('decrypt_input').value.trim();
+            const algorithm = document.getElementById('algorithm').value;
+
+            if (action === 'encrypt' && !message) {
+                showError('messageError', 'Message to encrypt cannot be empty.');
+                isValid = false;
+            }
+            if (!key) {
+                showError(action === 'encrypt' ? 'keyError' : 'decryptKeyError', 'Key cannot be empty.');
+                isValid = false;
+            }
+            if (action === 'decrypt' && !decryptInput) {
+                showError('decryptInputError', 'Message to decrypt cannot be empty.');
+                isValid = false;
+            }
+            if (algorithm === 'otp' && key.length < message.length && action === 'encrypt') {
+                showError('keyError', 'For OTP, key must be at least as long as the message.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Handle encryption
+        function handleEncrypt() {
+            if (!validateForm('encrypt')) return;
+
+            const message = document.getElementById('message').value;
+            const key = document.getElementById('key').value;
+            const algorithm = document.getElementById('algorithm').value;
+
+            document.getElementById('hidden_message').value = message;
+            document.getElementById('hidden_key').value = key;
+            document.getElementById('hidden_algorithm').value = algorithm;
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: new URLSearchParams({
+                    'message': message,
+                    'key': key,
+                    'algorithm': algorithm,
+                    'encrypt': 'true'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError('encryptResultError', data.error);
+                } else {
+                    document.getElementById('result_encrypt').value = data.result_encrypt || '';
+                }
+            })
+            .catch(error => {
+                showError('encryptResultError', 'An error occurred during encryption: ' + error.message);
+            });
+        }
+
+        // Handle decryption
+        function handleDecrypt() {
+            if (!validateForm('decrypt')) return;
+
+            const decryptInput = document.getElementById('decrypt_input').value;
+            const key = document.getElementById('decrypt_key').value;
+            const algorithm = document.getElementById('algorithm').value;
+
+            document.getElementById('hidden_decrypt_input').value = decryptInput;
+            document.getElementById('hidden_key').value = key;
+            document.getElementById('hidden_algorithm').value = algorithm;
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: new URLSearchParams({
+                    'decrypt_input': decryptInput,
+                    'key': key,
+                    'algorithm': algorithm,
+                    'decrypt': 'true'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError('decryptResultError', data.error);
+                } else {
+                    document.getElementById('result_decrypt').value = data.result_decrypt || '';
+                }
+            })
+            .catch(error => {
+                showError('decryptResultError', 'An error occurred during decryption: ' + error.message);
+            });
+        }
+
+        // Handle copy to clipboard
+        function handleCopy(fieldId) {
+            const input = document.getElementById(fieldId);
+            input.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        }
+
+        // Update algorithm in hidden field
+        function updateAlgorithm() {
+            document.getElementById('hidden_algorithm').value = document.getElementById('algorithm').value;
+        }
+
+        // Get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Initial load: Sync hidden algorithm with select
+        document.addEventListener('DOMContentLoaded', updateAlgorithm);
+    </script>
+</body>
+</html>
